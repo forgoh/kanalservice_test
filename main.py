@@ -2,23 +2,12 @@ import os.path
 import time
 import psycopg2
 import datetime
-import telebot
-import pandas as pd
 
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 from pycbrf.toolbox import ExchangeRates
 
-
 from config import *
-from bot import send_info
-
-
-TOKEN = '5546779719:AAHFoEo1ONwsfJcPBDPxVRetU_-DdkFrAqQ'
-
-bot = telebot.TeleBot(TOKEN)
-
-channel = "@kanalservice_test"
 
 rates = ExchangeRates(datetime.date.today())
 
@@ -58,13 +47,6 @@ def main():
 
         # cursor for performing db operations
 
-        with connection.cursor() as cursor:
-            cursor.execute(
-                "SELECT version();"
-            )
-
-            print(f"Server version: {cursor.fetchone()}")
-
         # create a new table
 
         with connection.cursor() as cursor:
@@ -79,7 +61,6 @@ def main():
 
             print("Table created succesfully!")
 
-
         data_now = []
         data_sec = []
 
@@ -92,7 +73,6 @@ def main():
                 )
 
         data_now.append(data)
-
 
         # condition if sheets updates
 
@@ -112,27 +92,11 @@ def main():
             for data in data_from_now[1:]:
                 data_sec.append(data)
 
-            for row in data_sec:
-                if (datetime.date.today() < pd.to_datetime(row[3], infer_datetime_format=True, utc=True, errors='ignore')) == False:
-                    bot.send_message(channel, '❌ ПРОСРОЧЕН Заказ №: ' + str(row[1]) + '\n\n'
-                                     + 'Срок поставки: ' + str(row[3]) + '\n\n'
-                                     + 'Текущая дата: ' + str(datetime.date.today())
-                                     )
-                time.sleep(3)
             if data_now != data_sec:
-                with connection.cursor() as cursor:
-                    cursor.execute(
-                        """DROP TABLE info""",
-                    )
 
                 with connection.cursor() as cursor:
                     cursor.execute(
-                        """CREATE TABLE info(
-                            id int,
-                            order_number int NOT NULL,
-                            usd int,
-                            supply_time date,
-                            in_rub float)"""
+                        """DELETE FROM info""",
                     )
 
                 for data in data_from_now[1:]:
